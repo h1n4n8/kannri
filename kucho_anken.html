@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>空調案件管理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:#f4f4f0;color:#1a1a1a;font-size:14px;}
+header{background:#1a1a1a;color:#fff;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;}
+header h1{font-size:18px;font-weight:700;letter-spacing:.05em;}
+header span{font-size:12px;color:#888;}
+.container{max-width:1200px;margin:0 auto;padding:24px 16px;}
+.tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid #1a1a1a;}
+.tab{padding:10px 24px;background:transparent;border:none;cursor:pointer;font-size:14px;font-family:'Noto Sans JP',sans-serif;color:#888;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a;}
+.section{display:none;}
+.section.active{display:block;}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+@media(max-width:480px){.stats-grid{grid-template-columns:1fr 1fr;}}
+.stat{background:#fff;border:1px solid #e0e0d8;border-radius:8px;padding:16px;text-align:center;}
+.stat-num{font-size:28px;font-weight:700;color:#1a1a1a;}
+.stat-label{font-size:11px;color:#888;margin-top:4px;letter-spacing:.05em;}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.filter-row select,.filter-row input{padding:8px 12px;border:1px solid #e0e0d8;border-radius:6px;font-size:13px;font-family:'Noto Sans JP',sans-serif;background:#fff;color:#1a1a1a;flex:1;min-width:120px;}
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e0e0d8;}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:13px;}
+th{text-align:left;padding:10px 12px;background:#f8f8f4;border-bottom:1px solid #e0e0d8;color:#555;font-weight:500;white-space:nowrap;}
+td{padding:10px 12px;border-bottom:1px solid #f0f0e8;color:#1a1a1a;white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafaf6;}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-未着手{background:#f0f0e8;color:#555;}
+.badge-施工中{background:#ddeeff;color:#1155aa;}
+.badge-完了{background:#ddf4e8;color:#116633;}
+.card{background:#fff;border:1px solid #e0e0d8;border-radius:8px;padding:24px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:11px;color:#888;font-weight:500;letter-spacing:.05em;}
+input,select,textarea{padding:9px 12px;border:1px solid #e0e0d8;border-radius:6px;font-size:14px;font-family:'Noto Sans JP',sans-serif;background:#fff;color:#1a1a1a;width:100%;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#1a1a1a;}
+textarea{resize:vertical;min-height:70px;}
+.btn-primary{padding:11px 28px;background:#1a1a1a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;margin-top:16px;}
+.btn-primary:hover{background:#333;}
+.btn-csv{padding:8px 16px;background:#fff;border:1px solid #e0e0d8;border-radius:6px;cursor:pointer;font-size:13px;font-family:'Noto Sans JP',sans-serif;color:#555;display:flex;align-items:center;gap:6px;}
+.btn-csv:hover{background:#f4f4f0;}
+.edit-btn{background:none;border:1px solid #e0e0d8;border-radius:4px;cursor:pointer;color:#888;font-size:12px;padding:3px 8px;font-family:'Noto Sans JP',sans-serif;}
+.edit-btn:hover{border-color:#1a1a1a;color:#1a1a1a;}
+.del-btn{background:none;border:1px solid #fcc;border-radius:4px;cursor:pointer;color:#c33;font-size:12px;padding:3px 8px;font-family:'Noto Sans JP',sans-serif;margin-left:4px;}
+.del-btn:hover{background:#fee;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:10px;padding:24px;width:100%;max-width:580px;}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.modal-title{font-size:16px;font-weight:700;}
+.close-btn{background:none;border:none;cursor:pointer;font-size:20px;color:#888;line-height:1;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.top-bar h2{font-size:15px;font-weight:700;}
+.empty-msg{text-align:center;color:#aaa;padding:40px;font-size:14px;}
+.saved-tag{font-size:11px;color:#116633;background:#ddf4e8;padding:2px 8px;border-radius:10px;display:none;}
+</style>
+</head>
+<body>
+<header>
+  <h1>空調案件管理</h1>
+  <span id="saved-tag" class="saved-tag">✓ 保存済み</span>
+</header>
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('list')">案件一覧</button>
+    <button class="tab" onclick="switchTab('add')">新規登録</button>
+  </div>
+
+  <div id="list" class="section active">
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-num" id="s-total">0</div><div class="stat-label">総案件数</div></div>
+      <div class="stat"><div class="stat-num" id="s-active">0</div><div class="stat-label">施工中</div></div>
+      <div class="stat"><div class="stat-num" id="s-done">0</div><div class="stat-label">完了</div></div>
+    </div>
+    <div class="top-bar">
+      <h2>案件一覧</h2>
+      <button class="btn-csv" onclick="exportCSV()">⬇ CSV出力</button>
+    </div>
+    <div class="filter-row">
+      <select id="f-status" onchange="renderList()">
+        <option value="">すべてのステータス</option>
+        <option>未着手</option><option>施工中</option><option>完了</option>
+      </select>
+      <select id="f-tanto" onchange="renderList()">
+        <option value="">すべての担当者</option>
+        <option>田中</option><option>鈴木</option><option>佐藤</option><option>山田</option><option>伊藤</option>
+      </select>
+      <select id="f-han" onchange="renderList()">
+        <option value="">すべての班</option>
+        <option>A班</option><option>B班</option><option>C班</option><option>D班</option><option>E班</option>
+      </select>
+      <input type="text" id="f-search" placeholder="案件名・発注者で検索..." oninput="renderList()">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>案件名</th><th>物件名</th><th>発注者</th><th>担当</th><th>班</th>
+            <th>見積金額</th><th>決定金額</th><th>受注日</th><th>施工予定日</th><th>完了日</th>
+            <th>ステータス</th><th>備考</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <p id="empty-msg" class="empty-msg" style="display:none;">案件が登録されていません</p>
+    </div>
+  </div>
+
+  <div id="add" class="section">
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group full"><label>案件名 *</label><input id="i-name" type="text" placeholder="〇〇ビル空調工事"></div>
+        <div class="form-group"><label>物件名・現場 *</label><input id="i-bukken" type="text" placeholder="横浜市〇〇ビル3F"></div>
+        <div class="form-group"><label>発注者 *</label><input id="i-hatchusha" type="text" placeholder="〇〇株式会社"></div>
+        <div class="form-group"><label>担当者</label>
+          <select id="i-tanto"><option value="">選択してください</option><option>田中</option><option>鈴木</option><option>佐藤</option><option>山田</option><option>伊藤</option></select>
+        </div>
+        <div class="form-group"><label>施工班</label>
+          <select id="i-han"><option value="">選択してください</option><option>A班</option><option>B班</option><option>C班</option><option>D班</option><option>E班</option></select>
+        </div>
+        <div class="form-group"><label>見積金額（円）</label><input id="i-mitsumori" type="number" placeholder="1500000"></div>
+        <div class="form-group"><label>決定金額（円）</label><input id="i-kettei" type="number" placeholder="1380000"></div>
+        <div class="form-group"><label>受注日</label><input id="i-juchudate" type="date"></div>
+        <div class="form-group"><label>施工予定日</label><input id="i-yoteidate" type="date"></div>
+        <div class="form-group"><label>完了日</label><input id="i-kanryodate" type="date"></div>
+        <div class="form-group"><label>ステータス</label>
+          <select id="i-status"><option>未着手</option><option>施工中</option><option>完了</option></select>
+        </div>
+        <div class="form-group full"><label>備考・メモ</label><textarea id="i-biko" placeholder="追加工事あり、など"></textarea></div>
+      </div>
+      <button class="btn-primary" onclick="addAnken()">登録する</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">案件を編集</span>
+      <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+    <div class="form-grid" id="modal-form"></div>
+    <button class="btn-primary" onclick="saveEdit()">保存する</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY='kucho_ankens_v1';
+let ankens=[];
+let nextId=1;
+let editId=null;
+
+function load(){
+  try{
+    const d=localStorage.getItem(STORAGE_KEY);
+    if(d){const p=JSON.parse(d);ankens=p.ankens||[];nextId=p.nextId||1;}
+  }catch(e){ankens=[];nextId=1;}
+}
+
+function save(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify({ankens,nextId}));
+  const tag=document.getElementById('saved-tag');
+  tag.style.display='inline';
+  setTimeout(()=>{tag.style.display='none';},2000);
+}
+
+function fmt(n){if(!n&&n!==0)return'-';return Number(n).toLocaleString('ja-JP')+'円';}
+
+function updateStats(){
+  document.getElementById('s-total').textContent=ankens.length;
+  document.getElementById('s-active').textContent=ankens.filter(a=>a.status==='施工中').length;
+  document.getElementById('s-done').textContent=ankens.filter(a=>a.status==='完了').length;
+}
+
+function renderList(){
+  const fs=document.getElementById('f-status').value;
+  const ft=document.getElementById('f-tanto').value;
+  const fh=document.getElementById('f-han').value;
+  const fq=document.getElementById('f-search').value.toLowerCase();
+  let filtered=ankens.filter(a=>{
+    if(fs&&a.status!==fs)return false;
+    if(ft&&a.tanto!==ft)return false;
+    if(fh&&a.han!==fh)return false;
+    if(fq&&!a.name.toLowerCase().includes(fq)&&!a.hatchusha.toLowerCase().includes(fq))return false;
+    return true;
+  });
+  const tb=document.getElementById('tbody');
+  const em=document.getElementById('empty-msg');
+  if(!filtered.length){tb.innerHTML='';em.style.display='block';updateStats();return;}
+  em.style.display='none';
+  tb.innerHTML=filtered.map(a=>`<tr>
+    <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis">${a.name}</td>
+    <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${a.bukken}</td>
+    <td>${a.hatchusha}</td>
+    <td>${a.tanto||'-'}</td>
+    <td>${a.han||'-'}</td>
+    <td style="text-align:right">${fmt(a.mitsumori)}</td>
+    <td style="text-align:right">${fmt(a.kettei)}</td>
+    <td>${a.juchudate||'-'}</td>
+    <td>${a.yoteidate||'-'}</td>
+    <td>${a.kanryodate||'-'}</td>
+    <td><span class="badge badge-${a.status}">${a.status}</span></td>
+    <td style="color:#888;max-width:100px;overflow:hidden;text-overflow:ellipsis">${a.biko||'-'}</td>
+    <td>
+      <button class="edit-btn" onclick="openEdit(${a.id})">編集</button>
+      <button class="del-btn" onclick="deleteAnken(${a.id})">削除</button>
+    </td>
+  </tr>`).join('');
+  updateStats();
+}
+
+function addAnken(){
+  const name=document.getElementById('i-name').value.trim();
+  const bukken=document.getElementById('i-bukken').value.trim();
+  const hatchusha=document.getElementById('i-hatchusha').value.trim();
+  if(!name||!bukken||!hatchusha){alert('案件名・物件名・発注者は必須です');return;}
+  ankens.push({
+    id:nextId++,name,bukken,hatchusha,
+    tanto:document.getElementById('i-tanto').value,
+    han:document.getElementById('i-han').value,
+    mitsumori:document.getElementById('i-mitsumori').value||null,
+    kettei:document.getElementById('i-kettei').value||null,
+    juchudate:document.getElementById('i-juchudate').value,
+    yoteidate:document.getElementById('i-yoteidate').value,
+    kanryodate:document.getElementById('i-kanryodate').value,
+    status:document.getElementById('i-status').value,
+    biko:document.getElementById('i-biko').value
+  });
+  save();
+  ['i-name','i-bukken','i-hatchusha','i-mitsumori','i-kettei','i-juchudate','i-yoteidate','i-kanryodate','i-biko'].forEach(id=>{document.getElementById(id).value='';});
+  ['i-tanto','i-han'].forEach(id=>{document.getElementById(id).selectedIndex=0;});
+  document.getElementById('i-status').selectedIndex=0;
+  switchTab('list');
+}
+
+function deleteAnken(id){
+  if(!confirm('この案件を削除しますか？'))return;
+  ankens=ankens.filter(a=>a.id!==id);
+  save();renderList();
+}
+
+function openEdit(id){
+  editId=id;
+  const a=ankens.find(x=>x.id===id);
+  const opts=(v,list)=>list.map(o=>`<option${o===v?' selected':''}>${o}</option>`).join('');
+  document.getElementById('modal-form').innerHTML=`
+    <div class="form-group full"><label>案件名</label><input id="e-name" value="${a.name}"></div>
+    <div class="form-group"><label>物件名</label><input id="e-bukken" value="${a.bukken}"></div>
+    <div class="form-group"><label>発注者</label><input id="e-hatchusha" value="${a.hatchusha}"></div>
+    <div class="form-group"><label>担当者</label><select id="e-tanto"><option value="">選択</option>${opts(a.tanto,['田中','鈴木','佐藤','山田','伊藤'])}</select></div>
+    <div class="form-group"><label>施工班</label><select id="e-han"><option value="">選択</option>${opts(a.han,['A班','B班','C班','D班','E班'])}</select></div>
+    <div class="form-group"><label>見積金額</label><input id="e-mitsumori" type="number" value="${a.mitsumori||''}"></div>
+    <div class="form-group"><label>決定金額</label><input id="e-kettei" type="number" value="${a.kettei||''}"></div>
+    <div class="form-group"><label>受注日</label><input id="e-juchudate" type="date" value="${a.juchudate||''}"></div>
+    <div class="form-group"><label>施工予定日</label><input id="e-yoteidate" type="date" value="${a.yoteidate||''}"></div>
+    <div class="form-group"><label>完了日</label><input id="e-kanryodate" type="date" value="${a.kanryodate||''}"></div>
+    <div class="form-group"><label>ステータス</label><select id="e-status">${opts(a.status,['未着手','施工中','完了'])}</select></div>
+    <div class="form-group full"><label>備考</label><textarea id="e-biko">${a.biko||''}</textarea></div>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+function saveEdit(){
+  const a=ankens.find(x=>x.id===editId);
+  a.name=document.getElementById('e-name').value;
+  a.bukken=document.getElementById('e-bukken').value;
+  a.hatchusha=document.getElementById('e-hatchusha').value;
+  a.tanto=document.getElementById('e-tanto').value;
+  a.han=document.getElementById('e-han').value;
+  a.mitsumori=document.getElementById('e-mitsumori').value||null;
+  a.kettei=document.getElementById('e-kettei').value||null;
+  a.juchudate=document.getElementById('e-juchudate').value;
+  a.yoteidate=document.getElementById('e-yoteidate').value;
+  a.kanryodate=document.getElementById('e-kanryodate').value;
+  a.status=document.getElementById('e-status').value;
+  a.biko=document.getElementById('e-biko').value;
+  save();closeModal();renderList();
+}
+
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((b,i)=>{b.classList.toggle('active',['list','add'][i]===t);});
+  document.querySelectorAll('.section').forEach(s=>{s.classList.toggle('active',s.id===t);});
+  if(t==='list')renderList();
+}
+
+function exportCSV(){
+  const headers=['案件名','物件名','発注者','担当者','施工班','見積金額','決定金額','受注日','施工予定日','完了日','ステータス','備考'];
+  const rows=ankens.map(a=>[a.name,a.bukken,a.hatchusha,a.tanto,a.han,a.mitsumori||'',a.kettei||'',a.juchudate,a.yoteidate,a.kanryodate,a.status,a.biko].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','));
+  const bom='\uFEFF';
+  const csv=bom+[headers.join(','),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='空調案件管理_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+load();renderList();
+</script>
+</body>
+</html>
